@@ -36,9 +36,9 @@ def parse_episode_html(html):
 	season = int(episodeNo[0:i])
 	episode = int(episodeNo[i+1:])
 	
-	episodeNo = 'S%02dE%02d' % (season, episode)
+	# episodeNo = 'S%02dE%02d' % (season, episode)
 	
-	return episodeNo, episodeName
+	return ((season, episode), episodeName)
 	
 def parse_backlog_page(html):
 	SEASON_START = "<tr class=\"seasonheader\">";
@@ -57,21 +57,25 @@ def parse_backlog_page(html):
 		# Parse the series name
 		seasonEnd = html.find("</tr>", seasonStart)
 		seasonName, seasonId = parse_season_html(html[seasonStart:seasonEnd])
-		#print "%s (%s)" % (seasonName, seasonId)
+		
 		offset = seasonEnd
 		
 		nextSeasonStart = html.find(SEASON_START, offset)
+		if nextSeasonStart < 0:
+			nextSeasonStart = html.index('</table>', offset)
 		
 		while (1):
 			# parse the episode blocks
 			i = html.find(EP_START, offset)
 			#print i
+			
 			if not (i >= 0) or nextSeasonStart < i:
 				break
-			j = html.find(EP_END, i)
+			j = html.index(EP_END, i)
 			#print j
 			episodeHtml = html[i:j]
-			episodeNo, episodeName = parse_episode_html(episodeHtml)
+			(episodeNo, episodeName) = parse_episode_html(episodeHtml)
+			#print episodeName
 			result.append((seasonName, seasonId, episodeName, episodeNo))
 			offset = j
 	return result
@@ -82,6 +86,7 @@ def get_backlog_list(server_url):
 	page.close()
 	
 	episodes = parse_backlog_page(html)
+	#print
 	return episodes
 
 	
