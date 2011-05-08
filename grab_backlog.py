@@ -1,7 +1,7 @@
 import urllib
 
 
-SICKBEARD_URL = "http://localhost:8081"
+
 SICKBEARD_BACKLOG_PAGE = "/manage/backlogOverview"
 
 def parse_season_html(html):
@@ -83,13 +83,5 @@ def get_backlog_list(server_url):
 	
 	episodes = parse_backlog_page(html)
 	return episodes
-	
-def main():
-	print "Scanning %s's backlog" % SICKBEARD_URL
-	
-	episodes = get_backlog_list(SICKBEARD_URL)
-	for x in episodes:
-		print x
 
-if __name__ == "__main__":
-	main()
+	
