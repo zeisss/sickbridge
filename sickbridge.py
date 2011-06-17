@@ -10,6 +10,8 @@ SICKBRIDGE_HOME = "%s/%s" % (os.getenv("USERPROFILE"), '.sickbridge')
 SICKBEARD_URL = "http://localhost:8081"
 JDOWNLOADER_URL = "http://localhost:8765"
 
+PREFERRED_HOSTER = 'netload.in'
+
 # Provide URLs for series manually, if the script is unable to find them through the search
 SERIES_MAPPING = {
 	'Castle (2009)': 'http://serienjunkies.org/castle/'
@@ -45,9 +47,10 @@ class SickbridgeHistory:
 		return "%s/%s_%s_%s" % (self.path, seriesName.lower()[0:5], episodeNo, md5.hexdigest())
 
 def link_sorter(a):
-	name, link = a
-	# prefer netload.in over others
-	if name == 'netload.in':
+	"""Sorts the list of URLs by hosting name. If our preferred name is found, it is sorted to the front."""
+	name, link = item
+	# prefer one hoster over others
+	if name == PREFERRED_HOSTER:
 		return "aaa%s" % name
 	else:
 		return name
@@ -66,7 +69,7 @@ def schedule_download(download):
 	
 	sortedLinks = sorted(download[6], key=link_sorter)
 	
-	if sortedLinks[0][0] == 'netload.in': # if our preferred hoster is there, add it solely
+	if sortedLinks[0][0] == PREFERRED_HOSTER: # if our preferred hoster is there, add it solely
 		print "Adding %s" % sortedLinks[0][1]
 		jdownloader.add_link(JDOWNLOADER_URL, sortedLinks[0][1])
 	else: # else add all
