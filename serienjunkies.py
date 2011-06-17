@@ -5,6 +5,33 @@
 
 import urllib
 
+series_urls = {}
+
+def parse_field(html, text):
+	i = html.find(text)
+	if i >= 0:
+		beginSpace = html.find(' ', i)
+		beginTagCloser = html.find('>', i)
+		
+		begin = -1
+		endTag = -1
+		if beginSpace >= 0:
+			begin = beginSpace + 1
+		else:
+			begin = beginTagCloser + 1
+		
+		endSeparator = html.find(' |', begin)
+		endTag = html.find('<', begin)
+		
+		if endSeparator >= 0:
+			end = endSeparator
+		else:
+			end = endTag
+		
+		return html[begin:end]
+	else:
+		return None
+
 def parse_author_line(html):
 	length = None
 	size = None
@@ -13,35 +40,41 @@ def parse_author_line(html):
 	uploader = None
 	
 	#print html
-	i = html.find('Dauer:')
-	if i >= 0:
-		i = html.index(' ', i)
-		j = html.index(' |', i)
-		length = html[i+1:j]
 	
-	i = html.find('<strong>Gr')
-	if i >= 0:
-		i = html.index(' ', i)
-		j = html.index(' |', i)
-		size= html[i+1:j]
-	
-	i = html.find('Sprache:')
-	if i >= 0:
-		i = html.index(' ', i)
-		j = html.index(' |', i)
-		language = html[i+1:j]
-	
-	i = html.find('Format:')
-	if i >= 0:
-		i = html.index(' ', i)
-		j = html.index(' |', i)
-		format = html[i+1:j]	
-	
-	i = html.find('Uploader:')
-	if i >= 0:
-		i = html.index(' ', i)
-		j = html.index('<', i)
-		uploader = html[i+1:j]
+	length = parse_field(html, 'Dauer:')
+	size = parse_field(html, '<strong>Gr')
+	language = parse_field(html, 'Sprache:')
+	format = parse_field(html, 'Format:')
+	uploader = parse_field(html, 'Uploader:')
+	#i = html.find('Dauer:')
+	#if i >= 0:
+	#	i = html.index(' ', i)
+	#	j = html.index(' |', i)
+	#	length = html[i+1:j]
+	#
+	#i = html.find('<strong>Gr')
+	#if i >= 0:
+	#	i = html.index(' ', i)
+	#	j = html.index(' |', i)
+	#	size= html[i+1:j]
+	#
+	#i = html.find('Sprache:')
+	#if i >= 0:
+	#	i = html.index(' ', i)
+	#	j = html.index(' |', i)
+	#	language = html[i+1:j]
+	#
+	#i = html.find('Format:')
+	#if i >= 0:
+	#	i = html.index(' ', i)
+	#	j = html.index(' |', i)
+	#	format = html[i+1:j]	
+	#
+	#i = html.find('Uploader:')
+	#if i >= 0:
+	#	i = html.index(' ', i)
+	#	j = html.index('<', i)
+	#	uploader = html[i+1:j]
 	
 	return length, size, language, format, uploader
 	
@@ -194,13 +227,15 @@ def find_episode_no(name):
 # serieId = thetvdb.com ID
 # episodeName = Episodes Nae
 # episodeNo = Number of Episode in the S__E__ format
-def get_download_links(serieName, serieId, episodeName, episodeNo):
-	se = myquote(serieName)
-	url = "http://serienjunkies.org/%s/" % se
+def get_download_links(serieName, serieId, episodeName, episodeNo, url = None):
+	if url == None:
+		se = myquote(serieName)
+		url = "http://serienjunkies.org/%s/" % se
 	#print url
 	s = urllib.urlopen(url)
-	assert s.getcode() == 200
-	
+	# assert s.getcode() == 200
+	if ( s.getcode() != 200):
+		print "Received code %d for %s" % (s.getcode(),  url)
 	html = s.read()
 	s.close()
 	
