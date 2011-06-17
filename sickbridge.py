@@ -94,33 +94,53 @@ def main():
 	
 	episodes = sickbeard.get_backlog_list(SICKBEARD_URL)
 	cBacklogSize = len(episodes)
+	
+	# Foreach episode in the backlog 
 	for x in episodes:
 		(seriesName, seriesId, episodeName, episodeNo) = x
 		
+		# Print info header
 		print "===="
 		print "%s S%sE%s - %s" % (seriesName, episodeNo[0], episodeNo[1], episodeName)
+		
+		# Skip episode, if the history shows we already added it once to jdownloader
+		# Possible reason for still beeing in the backlog:
+		# - JDownloader is still downloader
+		# - Files are offline
+		# - many more ...
 		if history.has_downloaded(seriesName, episodeNo, episodeName):
 			print "Already in history. Delete %s to download again." % history.get_path(seriesName, episodeNo, episodeName)
 			cNotDownloadedDueToCache = cNotDownloadedDueToCache + 1
 			continue
-			
+		
+		# Check if we have a specific URL to check for this TV-Serie (Sometimes the script cannot guess the page url correctly)
 		if seriesName in SERIES_MAPPING:
 			specificUrl = SERIES_MAPPING[seriesName]
 		else:
 			specificUrl = None
+			
+		# Grab the page and parse it into a list of available episodes
 		X = serienjunkies.get_download_links(seriesName, seriesId, episodeName, episodeNo, url=specificUrl)		
+		
+		# If none are found => Abort
 		if X == None or len(X) == 0:
 			print "Not found"
+		# We found some downloads for our wished episode :D
 		else:
-			#print X
+			# Sort them (If we have a preferred hoster, this sorts it to the top)
 			sortedDownloads = sorted(X, key=download_sorter)
+			
+			# Another check if we might already be downloading this file
 			if jdownloader.in_queue(JDOWNLOADER_URL, sortedDownloads[0][5]):
 				print "Already in queue"
 			else:
+				# Schedule the top download
 				schedule_download(sortedDownloads[0])
+				# Mark episode as downloaded by SickBridge
 				history.add_download(seriesName, episodeNo, episodeName)
 				cAddedToDownloader = cAddedToDownloader + 1
 	
+	# Print final results
 	print 
 	print
 	print "==============================================================================="
