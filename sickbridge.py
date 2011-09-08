@@ -153,7 +153,7 @@ def parseOptions():
 	parser.add_argument('-j', action='store', metavar='URL', dest='jdurl', help='set jdownloader url')
 	parser.add_argument('-n', action='store', metavar='NAME', dest='sbname', help='set sickbeard name')
 	parser.add_argument('-p', action='store', metavar='PASSWORD', dest='sbpass', help='set sickbeard password')
-	parser.add_argument('-l', action='store', choices=['en', 'de', 'none'], dest='language', help='set language')	
+	parser.add_argument('-l', action='store', choices=['en', 'de', 'both'], dest='language', help='set language')	
 	parser.add_argument('-d', action='store_true', dest='defaults', help='use default settings (use -w to reset config. file)')	
 	parser.add_argument('-w', action='store_true', dest='save', help='write arguments to the configuration file and exit')
 	parser.add_argument('--delete', action='store_true', dest='clear', help='delete history and exit')	

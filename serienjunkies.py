@@ -259,7 +259,7 @@ def get_download_links(serieName, serieId, episodeName, episodeNo, url = None, o
 			continue
 		if onlyLanguage == None:
 			continue
-		elif string.lower(language) != string.lower(onlyLanguage):
+		elif string.lower(onlyLanguage) not in string.lower(language):
 			continue
 		if (episodeNo[0] == seNo and episodeNo[1] == epNo) or (downloadName.lower().find(episodeName.lower().replace(' ', '.')) >= 0):
 			result.append(download)
