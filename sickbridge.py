@@ -46,7 +46,7 @@ class SickbridgeHistory:
 		md5.update(str(episodeNo))
 		return "%s/%s_%s_%s" % (self.path, seriesName.lower()[0:5], episodeNo, md5.hexdigest())
 
-def link_sorter(a):
+def link_sorter(item):
 	"""Sorts the list of URLs by hosting name. If our preferred name is found, it is sorted to the front."""
 	name, link = item
 	# prefer one hoster over others
