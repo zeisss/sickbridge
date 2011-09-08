@@ -2,7 +2,7 @@
 # A little helper grabbing the links from serienjunkies.org
 #
 
-
+import string
 import urllib
 
 series_urls = {}
@@ -227,7 +227,8 @@ def find_episode_no(name):
 # serieId = thetvdb.com ID
 # episodeName = Episodes Nae
 # episodeNo = Number of Episode in the S__E__ format
-def get_download_links(serieName, serieId, episodeName, episodeNo, url = None):
+# onlyLanguage = get only links for specified language (set to None for all languages)
+def get_download_links(serieName, serieId, episodeName, episodeNo, url = None, onlyLanguage = None):
 	if url == None:
 		se = myquote(serieName)
 		url = "http://serienjunkies.org/%s/" % se
@@ -255,6 +256,10 @@ def get_download_links(serieName, serieId, episodeName, episodeNo, url = None):
 		#print episodeNo
 		
 		if episodeNo == None:
+			continue
+		if onlyLanguage == None:
+			continue
+		elif string.lower(language) != string.lower(onlyLanguage):
 			continue
 		if (episodeNo[0] == seNo and episodeNo[1] == epNo) or (downloadName.lower().find(episodeName.lower().replace(' ', '.')) >= 0):
 			result.append(download)
