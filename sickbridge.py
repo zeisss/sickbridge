@@ -135,7 +135,10 @@ def read_config():
 	else:
 		section = 'DEFAULT'
 	PREFERRED_HOSTER = config.get(section,'preferedhost')
-	LANGUAGE = config.get(section,'language')
+	if config.get(section,'language') == 'None':
+		LANGUAGE = None
+	else:
+		LANGUAGE = config.get(section,'language')
 	SICKBEARD_URL = config.get(section,'sburl')
 	JDOWNLOADER_URL = config.get(section,'jdurl')
 	SICKBEARD_NAME = config.get(section, 'sbname')
