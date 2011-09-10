@@ -77,14 +77,9 @@ class SickbridgeConfig:
 		config = ConfigParser.RawConfigParser()
 		
 		config.add_section('Sickbridge')
-		config.set('Sickbridge', 'preferedhost', PREFERRED_HOSTER)
-		config.set('Sickbridge', 'language', LANGUAGE)
-		config.set('Sickbridge', 'sburl', SICKBEARD_URL)
-		config.set('Sickbridge', 'sbname', SICKBEARD_NAME)
-		config.set('Sickbridge', 'sbpass', SICKBEARD_PASS)
-		config.set('Sickbridge', 'jdurl', JDOWNLOADER_URL)	
-		
-		
+		for x in ['firsttime', 'preferredhost', 'language', 'sburl', 'jdurl', 'sbname', 'sbpass']:
+			config.set('Sickbridge', x, self.config[x]);
+			
 		if not os.path.exists(self.home):
 			print "Creating %s" % self.home
 			os.makedirs(self.home)
@@ -99,12 +94,13 @@ class SickbridgeConfig:
 		
 		# set ConfigParser up with default values
 		config = ConfigParser.ConfigParser({
-			'preferredhost': 'rapidshare.com',
-			'language': 	None,
-			'sburl': 		"http://localhost:8081/",
-			'jdurl': 		"http://localhost:7151/",
-			'sbname': 		None,
-			'sbpass': 		None
+			'preferredhost': 	None,
+			'language': 		None,
+			'sburl': 			"http://localhost:8081/",
+			'jdurl': 			"http://localhost:7151/",
+			'sbname': 			None,
+			'sbpass': 			None,
+			'firsttime':		'yes'
 		})
 			
 		# read the actual config file
@@ -116,7 +112,7 @@ class SickbridgeConfig:
 		else:
 			section = 'DEFAULT'
 		
-		for x in ['preferredhost', 'language', 'sburl', 'jdurl', 'sbname', 'sbpass']:
+		for x in ['firsttime', 'preferredhost', 'language', 'sburl', 'jdurl', 'sbname', 'sbpass']:
 			self.config[x] = config.get(section, x);
 			if self.config[x] == "None":
 				self.config[x] = None

@@ -3,6 +3,7 @@ from sickbridge import jdownloader
 from sickbridge import serienjunkies
 from sickbridge import sickbridge
 	
+import sys
 
 # Defaults / Globals
 JDOWNLOADER_URL = "http://localhost:8765/"
@@ -113,6 +114,14 @@ def main():
 	print "Sickbridge"
 	print "=========="
 	config = sickbridge.SickbridgeConfig()
+	if config.get('firsttime') == 'yes':
+		config.set('firsttime', 'no')
+		config.write_config()
+		
+		print "Welcome to Sickbridge. "
+		print "We created a config file for you at %s" % config.configFile
+		print "Please edit it and run this script again"
+		sys.exit()
 	
 	history = sickbridge.SickbridgeHistory(config)
 	
@@ -126,7 +135,7 @@ def main():
 		config.set('sburl', "http://localhost:8081/")
 		config.set('sbname', None)
 		config.set('sbpass', None)
-		config.set('preferredhost', "rapidshare.com")
+		config.set('preferredhost', None)
 		config.set('language', None)
 	
 	if vargs['sburl'] != None:

@@ -14,5 +14,6 @@ INSTALL
 =======
 1. Grab the code and unpack somewhere
 2. Enable WebInterface for JDownloader (We currently do not use the RemoteControl API)
-3. Edit sickbridge.py if you have non-default ports for SickBeard or JDownloader
-4. Start the script with either run.cmd (Windows) or the sickbridge.py directly
+3. Run the sickbridge.py script once to create the default configuration file in your users home folder (~/.sickbridge).
+4. Edit the config file to match the URLs of your setup
+5. Run sickbridge.py again
