@@ -109,6 +109,11 @@ def write_config():
 	config.set('Sickbridge', 'sbpass', SICKBEARD_PASS)
 	config.set('Sickbridge', 'jdurl', JDOWNLOADER_URL)	
 	
+	
+	if not os.path.exists(SICKBRIDGE_HOME):
+		print "Creating %s" % SICKBRIDGE_HOME
+		os.makedirs(SICKBRIDGE_HOME)
+	
 	with open(CONFIG_FILE, 'wb') as configfile:
 		config.write(configfile)
 		
@@ -193,7 +198,7 @@ def parseOptions():
 	
 	if vargs['save']:
 		write_config()
-		print "Settings written to configuration file"
+		print "Settings written to configuration file %s" % CONFIG_FILE
 		sys.exit()
 		
 	if vargs['clear']:
