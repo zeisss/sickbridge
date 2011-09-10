@@ -1,3 +1,4 @@
+# Imports
 import os
 import sys
 import shutil
@@ -9,20 +10,8 @@ import sickbeard
 import serienjunkies
 import jdownloader
 
-if sys.platform == "darwin":
-	# use ~/.sickbridge if on a mac
-	SICKBRIDGE_HOME = "%s/%s" % (os.path.expanduser("~"), '.sickbridge')
-elif sys.platform.startswith("win"):
-	# this should work for windows
-	SICKBRIDGE_HOME = "%s/%s" % (os.getenv("USERPROFILE"), '.sickbridge')
-else:
-	# let's assume everything else is linux...
-	# then this should work...
-	SICKBRIDGE_HOME = "%s/%s" % (os.path.expanduser("~"), '.sickbridge')
 
-CONFIG_FILE = "%s/%s" % (SICKBRIDGE_HOME, "sickbridge.cfg")
-
-# Defaults
+# Defaults / Globals
 JDOWNLOADER_URL = "http://localhost:8765/"
 SICKBEARD_URL = "http://localhost:8081/"
 SICKBEARD_NAME = None
@@ -37,13 +26,20 @@ SERIES_MAPPING = {
 }
 
 class SickbridgeHistory:
+	"""
+	Keeps a persistent history of what urls where previously downloaded.
+	"""
 	path = None
-	def __init__(self):
-		self.path = "%s/history" % SICKBRIDGE_HOME
+	config = None
+	def __init__(self, config):
+		self.config = config
+		self.path = os.path.join(self.config.home, "history")
 		
 		if not os.path.exists(self.path):
 			os.makedirs(self.path)
 	
+	def clear(self):
+		shutil.rmtree(self.path)
 	
 	def has_downloaded(self, seriesName, episodeNo, episodeName):
 		"""
@@ -65,6 +61,82 @@ class SickbridgeHistory:
 		md5.update(str(episodeNo))
 		return "%s/%s_%s_%s" % (self.path, seriesName.lower()[0:5], episodeNo, md5.hexdigest())
 
+class SickbridgeConfig:
+	"""
+	Utility class to store configuration values like preferred hoster and urls.
+	"""
+	home = None
+	configFile = None
+	def __init__(self):
+		if sys.platform == "darwin":
+			# use ~/.sickbridge if on a mac
+			self.home = os.path.join(os.path.expanduser("~"), '.sickbridge')
+		elif sys.platform.startswith("win"):
+			# this should work for windows
+			self.home = os.path.join(os.getenv("USERPROFILE"), '.sickbridge')
+		else:
+			# let's assume everything else is linux...
+			# then this should work...
+			self.home = os.path.join(os.path.expanduser("~"), '.sickbridge')
+		
+		self.configFile = os.path.join(self.home, "sickbridge.cfg")
+		
+	def write_config(self):
+		"""Write settings to configuration file"""
+		config = ConfigParser.RawConfigParser()
+		
+		config.add_section('Sickbridge')
+		config.set('Sickbridge', 'preferedhost', PREFERRED_HOSTER)
+		config.set('Sickbridge', 'language', LANGUAGE)
+		config.set('Sickbridge', 'sburl', SICKBEARD_URL)
+		config.set('Sickbridge', 'sbname', SICKBEARD_NAME)
+		config.set('Sickbridge', 'sbpass', SICKBEARD_PASS)
+		config.set('Sickbridge', 'jdurl', JDOWNLOADER_URL)	
+		
+		
+		if not os.path.exists(self.home):
+			print "Creating %s" % self.home
+			os.makedirs(self.home)
+		
+		with open(self.configFile, 'wb') as fp:
+			config.write(fp)
+		
+		print "Settings written to configuration file %s" % self.configFile
+		
+	def read_config(self):
+		"""Read settings from configuration file"""
+		
+		# TODO: Refactor globals
+		global PREFERRED_HOSTER, LANGUAGE, SICKBEARD_URL, JDOWNLOADER_URL, SICKBEARD_NAME, SICKBEARD_PASS
+		
+		# set ConfigParser up with default values
+		config = ConfigParser.ConfigParser({
+			'preferedhost':PREFERRED_HOSTER,
+			'language':LANGUAGE,
+			'sburl':SICKBEARD_URL,
+			'jdurl':JDOWNLOADER_URL,
+			'sbname':SICKBEARD_NAME,
+			'sbpass':SICKBEARD_PASS
+			})
+			
+		# read the actual config file
+		config.read(self.configFile)
+		
+		# set global variables to read values
+		if config.has_section('Sickbridge'):
+			section = 'Sickbridge'
+		else:
+			section = 'DEFAULT'
+		PREFERRED_HOSTER = config.get(section,'preferedhost')
+		if config.get(section,'language') == 'None':
+			LANGUAGE = None
+		else:
+			LANGUAGE = config.get(section,'language')
+		SICKBEARD_URL = config.get(section,'sburl')
+		JDOWNLOADER_URL = config.get(section,'jdurl')
+		SICKBEARD_NAME = config.get(section, 'sbname')
+		SICKBEARD_PASS = config.get(section, 'sbpass')	
+		
 def link_sorter(item):
 	"""Sorts the list of URLs by hosting name. If our preferred name is found, it is sorted to the front."""
 	name, link = item
@@ -97,62 +169,11 @@ def schedule_download(download):
 			jdownloader.add_link(JDOWNLOADER_URL, link)
 	print
 	
-def write_config():
-	"""Write settings to configuration file"""
-	config = ConfigParser.RawConfigParser()
-	
-	config.add_section('Sickbridge')
-	config.set('Sickbridge', 'preferedhost', PREFERRED_HOSTER)
-	config.set('Sickbridge', 'language', LANGUAGE)
-	config.set('Sickbridge', 'sburl', SICKBEARD_URL)
-	config.set('Sickbridge', 'sbname', SICKBEARD_NAME)
-	config.set('Sickbridge', 'sbpass', SICKBEARD_PASS)
-	config.set('Sickbridge', 'jdurl', JDOWNLOADER_URL)	
-	
-	
-	if not os.path.exists(SICKBRIDGE_HOME):
-		print "Creating %s" % SICKBRIDGE_HOME
-		os.makedirs(SICKBRIDGE_HOME)
-	
-	with open(CONFIG_FILE, 'wb') as configfile:
-		config.write(configfile)
+
 		
-def read_config():
-	"""Read settings from configuration file"""
-	global PREFERRED_HOSTER, LANGUAGE, SICKBEARD_URL, JDOWNLOADER_URL, SICKBEARD_NAME, SICKBEARD_PASS
-	
-	# set ConfigParser up with default values
-	config = ConfigParser.ConfigParser({
-		'preferedhost':PREFERRED_HOSTER,
-		'language':LANGUAGE,
-		'sburl':SICKBEARD_URL,
-		'jdurl':JDOWNLOADER_URL,
-		'sbname':SICKBEARD_NAME,
-		'sbpass':SICKBEARD_PASS
-		})
-		
-	# read the actual config file
-	config.read(CONFIG_FILE)
-	
-	# set global variables to read values
-	if config.has_section('Sickbridge'):
-		section = 'Sickbridge'
-	else:
-		section = 'DEFAULT'
-	PREFERRED_HOSTER = config.get(section,'preferedhost')
-	if config.get(section,'language') == 'None':
-		LANGUAGE = None
-	else:
-		LANGUAGE = config.get(section,'language')
-	SICKBEARD_URL = config.get(section,'sburl')
-	JDOWNLOADER_URL = config.get(section,'jdurl')
-	SICKBEARD_NAME = config.get(section, 'sbname')
-	SICKBEARD_PASS = config.get(section, 'sbpass')	
 	
 def parseOptions():
 	"""Using command line arguments to change config file"""
-	global PREFERRED_HOSTER, LANGUAGE, SICKBEARD_URL, JDOWNLOADER_URL, SICKBEARD_NAME, SICKBEARD_PASS
-	
 	import argparse
 	# set up the parser
 	parser = argparse.ArgumentParser(description='Adds your sickbeard backlog to JDownloader by search serienjunkies.org.')
@@ -167,56 +188,10 @@ def parseOptions():
 	parser.add_argument('--delete', action='store_true', dest='clear', help='delete history and exit')	
 	
 	# parse
-	vargs = vars(parser.parse_args())
+	return vars(parser.parse_args())
 	
-	# react
-	if vargs['defaults']:
-		JDOWNLOADER_URL = "http://localhost:7151/"
-		SICKBEARD_URL = "http://localhost:8081/"
-		SICKBEARD_NAME = None
-		SICKBEARD_PASS = None
-		PREFERRED_HOSTER = "rapidshare.com"
-		LANGUAGE = None
-	
-	if vargs['sburl'] != None:
-		SICKBEARD_URL = vargs['sburl']
-	if vargs['sbname'] != None:           	
-		SICKBEARD_NAME = vargs['sbname']
-	if vargs['sbpass'] != None:
-		SICKBEARD_PASS = vargs['sbpass']
-	if vargs['jdurl'] != None:
-		JDOWNLOADER_URL = vargs['jdurl']
-	if vargs['host'] != None:
-		PREFERRED_HOSTER = vargs['host']
-	if vargs['language'] != None:
-		if vargs['language'] == 'en':
-			LANGUAGE = 'Englisch'
-		elif vargs['language'] == 'de':
-			LANGUAGE = 'Deutsch'
-		else:
-			LANGUAGE = None
-	
-	if vargs['save']:
-		write_config()
-		print "Settings written to configuration file %s" % CONFIG_FILE
-		sys.exit()
-		
-	if vargs['clear']:
-		if os.path.exists("%s/history" % SICKBRIDGE_HOME):
-			shutil.rmtree("%s/history" % SICKBRIDGE_HOME)
-			print "Cleared History"
-		else:
-			print "History is already clear"
-		sys.exit()
-	
-def main():
-	print "Sickbridge"
-	print "=========="
-	
-	# Read Config
-	read_config()
-	# Parse Options
-	parseOptions()
+def action_default(config, history):
+	global PREFERRED_HOSTER, LANGUAGE, SICKBEARD_URL, JDOWNLOADER_URL, SICKBEARD_NAME, SICKBEARD_PASS
 	
 	# if name and / or password are saved, build the right url
 	SICKBEARD_URL_C = SICKBEARD_URL
@@ -230,8 +205,6 @@ def main():
 	cNotDownloadedDueToCache = 0
 	cAddedToDownloader = 0
 	
-	print "Creating history"
-	history = SickbridgeHistory()
 	
 	print "Scanning %s's backlog" % SICKBEARD_URL
 	
@@ -290,6 +263,61 @@ def main():
 	print "= %3d of %3d were previously added to queue.                                  =" % (cNotDownloadedDueToCache, cBacklogSize)
 	print "= Successfully added %3d new links to queue.                                  =" % (cAddedToDownloader)
 	print "==============================================================================="
+
+def action_clear(config, history):
+	history.clear()
+	print "Cleared History"
+	
+def action_save(config, history):
+	config.write_config()
+	
+def main():
+	print "Sickbridge"
+	print "=========="
+	config = SickbridgeConfig()
+	config.read_config()
+	
+	history = SickbridgeHistory(config)
+	
+	
+	# Parse Options
+	vargs = parseOptions()
+	
+	global PREFERRED_HOSTER, LANGUAGE, SICKBEARD_URL, JDOWNLOADER_URL, SICKBEARD_NAME, SICKBEARD_PASS
+	# react
+	if vargs['defaults']:
+		JDOWNLOADER_URL = "http://localhost:7151/"
+		SICKBEARD_URL = "http://localhost:8081/"
+		SICKBEARD_NAME = None
+		SICKBEARD_PASS = None
+		PREFERRED_HOSTER = "rapidshare.com"
+		LANGUAGE = None
+	
+	if vargs['sburl'] != None:
+		SICKBEARD_URL = vargs['sburl']
+	if vargs['sbname'] != None:           	
+		SICKBEARD_NAME = vargs['sbname']
+	if vargs['sbpass'] != None:
+		SICKBEARD_PASS = vargs['sbpass']
+	if vargs['jdurl'] != None:
+		JDOWNLOADER_URL = vargs['jdurl']
+	if vargs['host'] != None:
+		PREFERRED_HOSTER = vargs['host']
+	if vargs['language'] != None:
+		if vargs['language'] == 'en':
+			LANGUAGE = 'Englisch'
+		elif vargs['language'] == 'de':
+			LANGUAGE = 'Deutsch'
+		else:
+			LANGUAGE = None
+	
+	
+	if vargs['save']:
+		action_save(config, history)
+	elif vargs['clear']:
+		action_clear(config, history)
+	else:
+		action_default(config, history)
 	
 if __name__ == "__main__":
 	main()
