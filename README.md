@@ -12,5 +12,6 @@ If found, it pushes them to JDownloader for downloading (You still have to enter
 1. Grab the code and unpack somewhere
 2. Enable Remote for JDownloader
 3. Run the sickbridge.py script once to create the default configuration file in your users home folder (~/.sickbridge).
-4. Edit the config file to match the URLs of your setup
+4. Edit the config file or use the command line options together with
+   `-w` (see `--help`) to match the URLs of your setup
 5. Run sickbridge.py again
