@@ -4,6 +4,7 @@
 
 import string
 import urllib
+import httplib
 
 series_urls = {}
 
@@ -220,6 +221,9 @@ def find_episode_no(name):
 		
 		return (int(s[0:k]), int(s[k+6:]))
 	return None
+	
+CACHE = {}
+
 ##
 # The serie's download page must be available under http://www.serienjunkies.org/<SerieName>
 #
@@ -233,13 +237,28 @@ def get_download_links(serieName, serieId, episodeName, episodeNo, url = None, o
 		se = myquote(serieName)
 		url = "http://serienjunkies.org/%s/" % se
 	#print url
-	s = urllib.urlopen(url)
-	# assert s.getcode() == 200
-	if ( s.getcode() != 200):
-		print "Received code %d for %s" % (s.getcode(),  url)
-	html = s.read()
-	s.close()
 	
+	
+	if url in CACHE:
+		html = CACHE[url]
+	else:
+		print "[INFO] Fetching %s" % url
+		con = httplib.HTTPConnection('serienjunkies.org', 80)
+		con.request('GET', url, headers={
+			'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.0.10) Gecko/2009042316 Firefox/3.0.10'
+		})
+		resp = con.getresponse()
+		# s = urllib.urlopen(url)
+		# assert s.getcode() == 200
+		if ( resp.status != 200):
+			print "Received code %d %s for %s" % (resp.status, resp.reason,  url)
+		html = resp.read()
+		resp.close()
+		
+		CACHE[url] = html
+	
+		
+	# No work with the page content
 	(seNo, epNo) = episodeNo
 	
 	downloads = parse_serienjunkies_html(html)
