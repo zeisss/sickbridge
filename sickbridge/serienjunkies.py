@@ -224,14 +224,16 @@ def find_episode_no(name):
 	
 CACHE = {}
 
-##
-# The serie's download page must be available under http://www.serienjunkies.org/<SerieName>
-#
-# serieName = string
-# serieId = thetvdb.com ID
-# episodeName = Episodes Nae
-# episodeNo = Number of Episode in the S__E__ format
+
 def get_download_links(serieName, serieId, episodeName, episodeNo, url = None):
+	'''
+	The serie's download page must be available under http://www.serienjunkies.org/<SerieName>
+	
+	# serieName = string
+	# serieId = thetvdb.com ID
+	# episodeName = Episodes Nae
+	# episodeNo = Number of Episode in the S__E__ format
+	'''
 	if url == None:
 		se = myquote(serieName)
 		url = "http://serienjunkies.org/%s/" % se

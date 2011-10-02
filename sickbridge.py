@@ -7,7 +7,7 @@ import sys
 
 
 def parseOptions():
-	"""Using command line arguments to change config file"""
+	'''Using command line arguments to change config file'''
 	import argparse
 	# set up the parser
 	parser = argparse.ArgumentParser(description='Adds your sickbeard backlog to JDownloader by search serienjunkies.org.')

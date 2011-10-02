@@ -142,7 +142,7 @@ def parse_show_page(html, show_id):
 	)
 
 def get_show_settings(server_url, show_id):
-	"""
+	'''
 	Returns a tuple with the following fields:
 	- ShowID
 	- Official Name
@@ -153,7 +153,7 @@ def get_show_settings(server_url, show_id):
 	- Active (True, False)
 	- Air By Date (True, False)
 	- Season Folders (True, False)
-	"""
+	'''
 	sUrl = "%s%s%s" % (server_url, SICKBEARD_SHOW_PAGE, show_id)
 	if sUrl in cache:
 		return cache[sUrl]
