@@ -5,14 +5,7 @@ from sickbridge import sickbridge
 	
 import sys
 
-# Defaults / Globals
-JDOWNLOADER_URL = "http://localhost:8765/"
-SICKBEARD_URL = "http://localhost:8081/"
-SICKBEARD_NAME = None
-SICKBEARD_PASS = None
-PREFERRED_HOSTER = "netload.in"
-LANGUAGE = None
-	
+
 def parseOptions():
 	"""Using command line arguments to change config file"""
 	import argparse
@@ -101,7 +94,7 @@ def action_default(config, history):
 			sortedDownloads = sorted(X, key=sickbridge.download_sorter(config))
 			
 			# Another check if we might already be downloading this file
-			if jdownloader.in_queue(JDOWNLOADER_URL, sortedDownloads[0][5]):
+			if jdownloader.in_queue(config.get('jdurl'), sortedDownloads[0][5]):
 				print "[INFO] Already in queue"
 			else:
 				# Schedule the top download
