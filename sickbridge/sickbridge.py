@@ -45,7 +45,7 @@ class SickbridgeHistory:
 		md5 = hashlib.md5()
 		md5.update(seriesName)
 		md5.update(str(episodeNo))
-		return "%s/%s_%s_%s" % (self.path, seriesName.lower()[0:5], episodeNo, md5.hexdigest())
+		return os.path.join(self.path, "%s_%s_%s" % (seriesName.lower()[0:5], episodeNo, md5.hexdigest()))
 
 class SickbridgeConfig:
 	"""
@@ -146,6 +146,9 @@ def link_sorter(config):
 	return helper
 	
 def download_sorter(config):
+	"""
+	Returns a function which sorts the downloads by (format, size, downloadLink)
+	"""
 	def helper(a):
 		length1, size1, language1, format1, uploader1, downloadName1, links1 = a
 		
@@ -170,4 +173,41 @@ def schedule_download(config, download):
 			jdownloader.add_link(config.get('jdurl'), link)
 	print
 	
+def filter_download(downloads, showQuality, showLanguage):
+	newDownloads = []
+	
+	for download in downloads:
+		(length1, size1, language1, format1, uploader1, downloadName1, links1) = download
+		if is_quality(showQuality, size1, format1) and is_language(showLanguage, language1):
+			newDownloads.append(download)		   
+	
+	return newDownloads
+	
+def is_quality(showQuality, downloadSize, downloadFormat):
+	"""
+	Returns true if the format or size matches a shows quality.
+	
+	showQuality = "HD" | "SD" | "Custom" | "Any" | None
+	"""
+	def is_hd(size, format):	
+		if format.lower() == "x264" or format.lower() == "h.264":
+			return True
+			
+		return False
+		
+	if showQuality == None or showQuality == "Any" or showQuality == "Custom": 
+		return True		
+	elif showQuality == "HD":
+		return is_hd(downloadSize, downloadFormat)
+	else: # SD
+		return not(is_hd(downloadSize, downloadFormat))
 
+def is_language(showLanguage, downloadLanguage):
+	"""
+	showLanguage: 2 character language code
+	downloadLanguage: any language code that might be used somewhere
+	"""
+	if showLanguage == None or downloadLanguage == None:
+		return True
+	
+	return showLanguage.lower() in downloadLanguage.lower()

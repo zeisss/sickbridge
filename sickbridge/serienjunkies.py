@@ -231,8 +231,7 @@ CACHE = {}
 # serieId = thetvdb.com ID
 # episodeName = Episodes Nae
 # episodeNo = Number of Episode in the S__E__ format
-# onlyLanguage = get only links for specified language (set to None for all languages)
-def get_download_links(serieName, serieId, episodeName, episodeNo, url = None, onlyLanguage = None):
+def get_download_links(serieName, serieId, episodeName, episodeNo, url = None):
 	if url == None:
 		se = myquote(serieName)
 		url = "http://serienjunkies.org/%s/" % se
@@ -243,14 +242,16 @@ def get_download_links(serieName, serieId, episodeName, episodeNo, url = None, o
 		html = CACHE[url]
 	else:
 		print "[INFO] Fetching %s" % url
-		con = httplib.HTTPConnection('serienjunkies.org', 80)
-		con.request('GET', url, headers={
-			'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.0.10) Gecko/2009042316 Firefox/3.0.10'
-		})
-		resp = con.getresponse()
-		# s = urllib.urlopen(url)
-		# assert s.getcode() == 200
-		if ( resp.status != 200):
+		
+		#con = httplib.HTTPConnection('serienjunkies.org', 80)
+		#con.request('GET', url, headers={
+		#	'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.0.10) Gecko/2009042316 Firefox/3.0.10'
+		#})
+		#resp = con.getresponse()
+		resp = urllib.urlopen(url)
+		#assert s.getcode() == 200
+		#if ( resp.status != 200):
+		if (resp.getcode() != 200):
 			print "Received code %d %s for %s" % (resp.status, resp.reason,  url)
 		html = resp.read()
 		resp.close()
@@ -258,7 +259,7 @@ def get_download_links(serieName, serieId, episodeName, episodeNo, url = None, o
 		CACHE[url] = html
 	
 		
-	# No work with the page content
+	# Now work with the page content
 	(seNo, epNo) = episodeNo
 	
 	downloads = parse_serienjunkies_html(html)
@@ -276,12 +277,7 @@ def get_download_links(serieName, serieId, episodeName, episodeNo, url = None, o
 		
 		if episodeNo == None:
 			continue
-		if onlyLanguage != None and string.lower(onlyLanguage) not in string.lower(language):
-			continue
 		if (episodeNo[0] == seNo and episodeNo[1] == epNo) or (downloadName.lower().find(episodeName.lower().replace(' ', '.')) >= 0):
 			result.append(download)
 	return result
 	
-	
-	
-

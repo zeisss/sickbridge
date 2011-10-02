@@ -54,12 +54,21 @@ def action_default(config, history):
 	cBacklogSize = len(episodes)
 	
 	# Foreach episode in the backlog 
-	for x in episodes:
-		(seriesName, seriesId, episodeName, episodeNo) = x
+	for (seriesName, seriesId, episodeName, episodeNo) in episodes:
+		print
+		
+		# Fetch the show-settings from sickbeard
+		(showId, showName, showLocation, showQuality, showLanguage, showStatus, showActive, showAirByDate, showSeasonFolders) = sickbeard.get_show_settings(SICKBEARD_URL_C, seriesId)
 		
 		# Print info header
-		print "===="
-		print "%s S%sE%s - %s" % (seriesName, episodeNo[0], episodeNo[1], episodeName)
+		
+		print "+-----------------------------------------------------------------------------+"
+		print "| Name: %s " % showName		
+		print "| Location: %s " % showLocation
+		print "| Quality: %s " % showQuality
+		print "|"
+		print "| Episode: S%sE%s - %s" % (episodeNo[0], episodeNo[1], episodeName)
+		print "+-----------------------------------------------------------------------------+"
 		
 		# Skip episode, if the history shows we already added it once to jdownloader
 		# Possible reason for still beeing in the backlog:
@@ -67,7 +76,7 @@ def action_default(config, history):
 		# - Files are offline
 		# - many more ...
 		if history.has_downloaded(seriesName, episodeNo, episodeName):
-			print "Already in history. Delete %s to download again." % history.get_path(seriesName, episodeNo, episodeName)
+			print "[FINE] Already in history. Delete %s to download again." % history.get_path(seriesName, episodeNo, episodeName)
 			cNotDownloadedDueToCache = cNotDownloadedDueToCache + 1
 			continue
 		
@@ -75,11 +84,17 @@ def action_default(config, history):
 		specificUrl = config.get_mapping(seriesName)
 			
 		# Grab the page and parse it into a list of available episodes
-		X = serienjunkies.get_download_links(seriesName, seriesId, episodeName, episodeNo, url=specificUrl, onlyLanguage=config.get('language'))
+		downloads = serienjunkies.get_download_links(seriesName, seriesId, episodeName, episodeNo, url=specificUrl)
+		
+		# Filter out downloads that do not match our requirements (format, quality, language)
+		X = sickbridge.filter_download(downloads, showQuality, showLanguage)
+		
+		if len(downloads) != len(X):
+			print "[INFO] %d Downloads dropped because of quality/language mismatch." % (len(downloads) - len(X))
 		
 		# If none are found => Abort
 		if X == None or len(X) == 0:
-			print "Not found"
+			print "[INFO] No downloads found."
 		# We found some downloads for our wished episode :D
 		else:
 			# Sort them (If we have a preferred hoster, this sorts it to the top)
@@ -87,7 +102,7 @@ def action_default(config, history):
 			
 			# Another check if we might already be downloading this file
 			if jdownloader.in_queue(JDOWNLOADER_URL, sortedDownloads[0][5]):
-				print "Already in queue"
+				print "[INFO] Already in queue"
 			else:
 				# Schedule the top download
 				sickbridge.schedule_download(config, sortedDownloads[0])
