@@ -177,12 +177,61 @@ def filter_download(downloads, showQuality, showLanguage):
 	newDownloads = []
 	
 	for download in downloads:
-		(length1, size1, language1, format1, uploader1, downloadName1, links1) = download
-		if is_quality(showQuality, size1, format1) and is_language(showLanguage, language1):
+		(length1, size1, language1, format, uploader, downloadName, links) = download
+		# Sometimes a uploader does not provide a format, then we have to guess by the filename
+		if format == None:
+			format = get_quality(downloadName)
+		# If the download matches the quality/language requirements => add it
+		if is_quality(showQuality, size1, format) and is_language(showLanguage, language1):69A
 			newDownloads.append(download)		   
 	
 	return newDownloads
 	
+def get_quality(release):
+	'''
+	Tries to guess the quality of the release by parsing the release name.
+	Returns a string compatible to SickBeard qualities if parsed successful,
+	returns False else.
+	'''
+
+	release = release.lower()
+
+	if 'dvdrip' in release or 'blurayrip' in release:
+			return 'SD DVD'
+	elif 'xvid' in release:
+		if 'tv' in release:
+			return 'SD TV'
+		elif 'itunes' in release:
+			return 'SD DVD'
+		else:
+			# if nothing fits, assume the worst
+			return 'SD TV'
+	elif '720p' in release:
+		if 'hdtv' in release:
+			return 'HD TV'
+		elif 'bluray' in release:
+			return '720p BluRay'
+		elif 'bdrip' in release:
+			return '720p BluRay'
+		elif 'web' in release:
+			return '720p WEB-DL'
+		elif 'itunes' in release:
+			return '720p WEB-DL'
+		else:
+			# and again, assume the worst
+			return 'HD TV'
+	elif '1080p' in release:
+		if 'bluray' in release:
+			return '1080p BluRay'
+		elif 'bdrip' in release:
+			return '1080p BluRay'
+		else:
+			# lots of assuming done...
+			return 'HD TV'
+	else:
+		# if we land here something is seriously wrong with this release
+		return False
+
 def is_quality(showQuality, downloadSize, downloadFormat):
 	"""
 	Returns true if the format or size matches a shows quality.
@@ -190,7 +239,11 @@ def is_quality(showQuality, downloadSize, downloadFormat):
 	showQuality = "HD" | "SD" | "Custom" | "Any" | None
 	"""
 	def is_hd(size, format):	
-		if format.lower() == "x264" or format.lower() == "h.264":
+		if format.lower() == "x264" or  # some of the formats from sj
+		   format.lower() == "h.264" or
+			"1080p" in format or # the HD formats of sickbeard (used by get_quality above)
+			"720p" in format or
+			"HD" in format:
 			return True
 			
 		return False
