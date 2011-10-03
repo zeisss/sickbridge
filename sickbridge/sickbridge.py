@@ -198,7 +198,7 @@ def get_quality(release):
 
 	release = release.lower()
 
-	if 'dvdrip' in release or 'blurayrip' in release:
+	if 'dvdrip' in release or 'dvdscr' in release or 'blurayrip' in release:
 			return 'SD DVD'
 	elif 'xvid' in release:
 		if 'tv' in release:
@@ -232,7 +232,8 @@ def get_quality(release):
 			return 'HD TV'
 	else:
 		# if we land here something is seriously wrong with this release
-		return False
+		print "[ERROR] Unknown release type: %s" % release
+		return None
 
 def is_quality(showQuality, downloadSize, downloadFormat):
 	'''
@@ -240,7 +241,6 @@ def is_quality(showQuality, downloadSize, downloadFormat):
 	
 	showQuality = "HD" | "SD" | "Any" | custom combination of formats
 	'''
-
 	if showQuality == 'HD':
 		if '720p' in downloadFormat or '1080p' in downloadFormat or 'HD TV' in downloadFormat:
 			return True
