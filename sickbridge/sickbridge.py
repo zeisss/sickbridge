@@ -178,13 +178,15 @@ def filter_download(downloads, showQuality, showLanguage):
 	
 	for download in downloads:
 		(length1, size1, language1, format, uploader, downloadName, links) = download
-		# Sometimes a uploader does not provide a format, then we have to guess by the filename
-		if format == None:
-			format = get_quality(downloadName)
+		# Guess the format from the download / release name. This should be the
+		# best solution because the quality tags on serienjunkies.org are
+		# inconsistent, but quality tags in release names are more or less
+		# standardized
+		format = get_quality(downloadName)
+
 		# If the download matches the quality/language requirements => add it
 		if is_quality(showQuality, size1, format) and is_language(showLanguage, language1):
-			newDownloads.append(download)		   
-	
+			newDownloads.append(download)
 	return newDownloads
 	
 def get_quality(release):
@@ -236,24 +238,21 @@ def is_quality(showQuality, downloadSize, downloadFormat):
 	'''
 	Returns true if the format or size matches a shows quality.
 	
-	showQuality = "HD" | "SD" | "Custom" | "Any" | None
+	showQuality = "HD" | "SD" | "Any" | custom combination of formats
 	'''
-	def is_hd(size, format):	
-		if format.lower() == "x264" or  # some of the formats from sj
-		   format.lower() == "h.264" or
-			"1080p" in format or # the HD formats of sickbeard (used by get_quality above)
-			"720p" in format or
-			"HD" in format:
+
+	if showQuality == 'HD':
+		if '720p' in downloadFormat or '1080p' in downloadFormat or 'HD TV' in downloadFormat:
 			return True
-			
-		return False
-		
-	if showQuality == None or showQuality == "Any" or showQuality == "Custom": 
-		return True		
-	elif showQuality == "HD":
-		return is_hd(downloadSize, downloadFormat)
-	else: # SD
-		return not(is_hd(downloadSize, downloadFormat))
+	elif showQuality == 'SD':
+		if 'SD' in downloadFormat:
+			return True
+	elif showQuality == 'Any':
+		return True
+	else:
+		if downloadFormat in showQuality:
+			return True
+	return False
 
 def is_language(showLanguage, downloadLanguage):
 	'''
