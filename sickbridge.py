@@ -14,8 +14,8 @@ def parseOptions():
 	parser.add_argument('-o', action='store', dest='host', help='set prefered hoster')
 	parser.add_argument('-s', action='store', metavar='URL', dest='sburl', help='set sickbeard url')
 	parser.add_argument('-j', action='store', metavar='URL', dest='jdurl', help='set jdownloader url')
-	parser.add_argument('-n', action='store', metavar='NAME', dest='sbname', help='set sickbeard name')
-	parser.add_argument('-p', action='store', metavar='PASSWORD', dest='sbpass', help='set sickbeard password')
+	parser.add_argument('-n', action='store', metavar='NAME', dest='sbname', help='set sickbeard username (optional)')
+	parser.add_argument('-p', action='store', metavar='PASSWORD', dest='sbpass', help='set sickbeard password (optional)')
 	parser.add_argument('-l', action='store', choices=['en', 'de', 'both'], dest='language', help='set language')	
 	parser.add_argument('-d', action='store_true', dest='defaults', help='use default settings (use -w to reset config. file)')	
 	parser.add_argument('-w', action='store_true', dest='save', help='write arguments to the configuration file and exit')
@@ -84,7 +84,7 @@ def action_default(config, history):
 		
 		if len(downloads) != len(X):
 			print "[INFO] %d Downloads dropped because of quality/language mismatch." % (len(downloads) - len(X))
-		
+
 		# If none are found => Abort
 		if X == None or len(X) == 0:
 			print "[INFO] No downloads found."
