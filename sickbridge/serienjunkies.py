@@ -176,7 +176,10 @@ def parse_serienjunkies_html(html):
 		offset = j
 	return links
 	
-def myquote(name):
+def escape_show_name(name):
+	'''
+	Tries to replace all special chars as best as possible to mimick the url names of tv show names at serienjunkies.org
+	'''
 	result = ""
 	for x in name:
 		if x.isalpha() or x.isdigit():
@@ -184,9 +187,9 @@ def myquote(name):
 		else:
 			result = result + "-"
 	result = result.replace("--","-")
-	return result.rstrip('-').strip('-')
+	return result.rstrip('-').strip('-').lower()
 	
-def find_episode_no(name):
+def parse_episode_no(name):
 	i = name.find('.S')
 	
 	# Search for a ...S__E__...
@@ -202,82 +205,105 @@ def find_episode_no(name):
 			return (se, ep)
 	
 	offset = 0
-	while 1:
-		i = name.find('.', offset)
-		if not (i>=0):
-			break
-		j = name.find('.',i+1)
-		if not (j>=0):
-			break
-			
-		offset = j
-		
-		s = name[i+1:j]
-		k = s.find('&#215;')
+	for part in name.split('.'):
+		k = part.find('&#215;')
 		if not(k >= 0): # if there is no 'x', skip to next string part
 			continue
 		
-		return (int(s[0:k]), int(s[k+6:]))
+		try:
+			return (int(part[0:k]), int(part[k+6:]))
+		except ValueError:
+			None
 	return None
+
+def parse_next_page_link(html):
+	NAVIGATION_START = "<div class=\"navigation\">"
+	NAVIGATION_END = "</div>"
+	NEXT_IDENTIFIER = " class=\"next\">&raquo;</a>"
+	
+	navStart = html.find(NAVIGATION_START)
+	if not(navStart >= 0): return None
+	navEnd = html.find(NAVIGATION_END, navStart)
+	assert(navEnd >= 0)
+	navigationBlock = html[navStart:navEnd]
+	
+	
+	if navigationBlock.find(NEXT_IDENTIFIER) >= 0: # we have a next link
+		a = navigationBlock.rfind("<a href=\"")
+		assert(a >= 0)
+		b = navigationBlock.find("\" class=\"next\">", a)
+		assert(b >= 0)
+		return navigationBlock[a + 9:b]
 	
 CACHE = {}
 
 
-def get_download_links(serieName, serieId, episodeName, episodeNo, url = None):
+def get_download_links(showName, showId, episodeName, episodeId, url = None):
 	'''
-	The serie's download page must be available under http://www.serienjunkies.org/<SerieName>
+	Returns all downloads for the given show and with the given episode.
 	
-	# serieName = string
-	# serieId = thetvdb.com ID
-	# episodeName = Episodes Nae
-	# episodeNo = Number of Episode in the S__E__ format
+	The serie's download page must be available under http://www.serienjunkies.org/serie/<ShowName>
+	
+	- showName = string
+	- showId = thetvdb.com ID
+	- episodeName = Episodes Nae
+	- episodeId <=> (seasonNo, episodeNo)
 	'''
 	if url == None:
-		se = myquote(serieName)
-		url = "http://serienjunkies.org/%s/" % se
+		se = escape_show_name(showName)
+		# /serie/ must be part of the URL, otherwise the generated next-links  do not work.
+		url = "http://serienjunkies.org/serie/%s/" % se
 	#print url
 	
+	result = []
+	_collect_download_links(showName, showId, episodeName, episodeId, url, result)
+	return result
 	
+def _collect_download_links(showName, showId, episodeName, episodeId, url, result):
+	print "'%s' %d '%s' %s %s %d" % (showName, showId, episodeName, str(episodeId), url, len(result))
+	# Check if we have the page content in the CACHE or download it
 	if url in CACHE:
 		html = CACHE[url]
 	else:
 		print "[INFO] Fetching %s" % url
-		
-		#con = httplib.HTTPConnection('serienjunkies.org', 80)
-		#con.request('GET', url, headers={
-		#	'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.0.10) Gecko/2009042316 Firefox/3.0.10'
-		#})
-		#resp = con.getresponse()
 		resp = urllib.urlopen(url)
-		#assert s.getcode() == 200
-		#if ( resp.status != 200):
 		if (resp.getcode() != 200):
-			print "Received code %d %s for %s" % (resp.status, resp.reason,  url)
+			print "[ERROR] Received code %d for %s" % (resp.getcode(), url)
+		
+		if 'content-type' not in resp.headers:
+			print "[WARN] Result has no content-type!"
+		elif (resp.headers['content-type'][0:9] != "text/html"):
+			print "[WARN] Content-type is unexpected: %s" % resp.headers['content-type']
 		html = resp.read()
 		resp.close()
 		
 		CACHE[url] = html
 	
-		
-	# Now work with the page content
-	(seNo, epNo) = episodeNo
+	if html[0:14] != '<!DOCTYPE html':
+		print "[WARN] Result page for %s does not look like HTML: %s" % (url, html[0:20])
 	
-	downloads = parse_serienjunkies_html(html)
+	# print html[0:1000]
+	# Now parse the page content
+	(seasonNo, episodeNr) = episodeId
 	
-	result = []
-	assert downloads != None
-	for download in downloads:
+	allDownloads = parse_serienjunkies_html(html)
+	
+	assert allDownloads != None
+	for download in allDownloads:
 		length, size, language, format, uploader, downloadName, links = download
 		
-		
-		episodeNo = find_episode_no(downloadName)
-		
-		#print downloadName
-		#print episodeNo
-		
-		if episodeNo == None:
+		downloadEpisodeNr = parse_episode_no(downloadName)
+		if downloadEpisodeNr == None:
+			# print "[WARN] Skipping %s without episode-no" % downloadName
 			continue
-		if (episodeNo[0] == seNo and episodeNo[1] == epNo) or (downloadName.lower().find(episodeName.lower().replace(' ', '.')) >= 0):
+		episodeIdMatch = (downloadEpisodeNr[0] == seasonNo and downloadEpisodeNr[1] == episodeNr)
+		# print "S%02dE%02d == S%02dE%02d => %s" % (downloadEpisodeNr[0], downloadEpisodeNr[1], seasonNo, episodeNr, str(episodeIdMatch) )
+		if episodeIdMatch or (downloadName.lower().find(episodeName.lower().replace(' ', '.')) >= 0):
 			result.append(download)
-	return result
+			
+	nextUrl = parse_next_page_link(html)
+	if nextUrl != None:
+		# Recursively collect links from the next page as well.
+		_collect_download_links(showName, showId, episodeName, episodeId, nextUrl, result)
+
 	
