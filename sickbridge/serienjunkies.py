@@ -6,8 +6,6 @@ import string
 import urllib
 import httplib
 
-series_urls = {}
-
 def parse_field(html, text):
 	i = html.find(text)
 	if i >= 0:
