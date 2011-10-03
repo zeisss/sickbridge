@@ -67,12 +67,12 @@ def action_default(config, history):
 		print "| Language: %s " % showLanguage
 		print "| Quality: %s " % showQuality
 		print "|"
-		print "| Episode: S%sE%s - %s" % (episodeNo[0], episodeNo[1], episodeName)
+		print "| Episode: S%02dE%02d - %s" % (episodeNo[0], episodeNo[1], episodeName)
 		print "+-----------------------------------------------------------------------------+"
 		
 		# Skip episode, if the history shows we already added it once to jdownloader
 		# Possible reason for still beeing in the backlog:
-		# - JDownloader is still downloader
+		# - JDownloader is still downloading
 		# - Files are offline
 		# - many more ...
 		if history.has_downloaded(seriesName, episodeNo, episodeName):
@@ -81,10 +81,10 @@ def action_default(config, history):
 			continue
 		
 		# Check if we have a specific URL to check for this TV-Serie (Sometimes the script cannot guess the page url correctly)
-		specificUrl = config.get_mapping(seriesName)
+		specificShowUrl = config.get_mapping(seriesName)
 			
 		# Grab the page and parse it into a list of available episodes
-		downloads = serienjunkies.get_download_links(seriesName, seriesId, episodeName, episodeNo, url=specificUrl)
+		downloads = serienjunkies.get_download_links(seriesName, seriesId, episodeName, episodeNo, url=specificShowUrl)
 		
 		# Filter out downloads that do not match our requirements (format, quality, language)
 		X = sickbridge.filter_download(downloads, showQuality, showLanguage)
