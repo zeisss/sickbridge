@@ -182,7 +182,7 @@ def filter_download(downloads, showQuality, showLanguage):
 		if format == None:
 			format = get_quality(downloadName)
 		# If the download matches the quality/language requirements => add it
-		if is_quality(showQuality, size1, format) and is_language(showLanguage, language1):69A
+		if is_quality(showQuality, size1, format) and is_language(showLanguage, language1):
 			newDownloads.append(download)		   
 	
 	return newDownloads
