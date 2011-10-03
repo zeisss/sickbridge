@@ -57,7 +57,7 @@ def action_default(config, history):
 		
 		print "+-----------------------------------------------------------------------------+"
 		print "| Name: %s " % showName		
-		print "| Location: %s " % showLocation
+		print "| Language: %s " % showLanguage
 		print "| Quality: %s " % showQuality
 		print "|"
 		print "| Episode: S%sE%s - %s" % (episodeNo[0], episodeNo[1], episodeName)
