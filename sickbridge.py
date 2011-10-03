@@ -40,6 +40,13 @@ def action_default(config, history):
 	cNotDownloadedDueToCache = 0
 	cAddedToDownloader = 0
 	
+	if not jdownloader.is_available(config.get('jdurl')):
+		print '[ERROR] Unable to connect to JDownloader. Check the following:'
+		print ' 1) Make sure JDownloader is running'
+		print ' 2) RemoteControl Plugin is active'
+		print ' 3) The setting in the sickbridge config is properly configured (currently: %s)' % config.get('jdurl')
+		print ' Exiting.'
+		sys.exit(1)
 	
 	print "Scanning %s's backlog" % config.get('sburl')
 	

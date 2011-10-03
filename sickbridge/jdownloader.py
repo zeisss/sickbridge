@@ -1,6 +1,6 @@
 import urllib
 
-def is_jd_on(jdownloader_url):
+def is_available(jdownloader_url):
     '''
     Check if JDownloader is running (the app, not the download)
     '''
