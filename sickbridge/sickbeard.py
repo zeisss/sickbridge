@@ -100,6 +100,16 @@ def parse_show_page(html, show_id):
 		
 		b = htmlsnippet.find("<td>", a) + 4
 		c = htmlsnippet.find("</td>", b)
+
+		# if custom quality is choosen, sickbeard lists the chosen qualities
+		# instead of showing "Custom". In this case we should cut the string
+		# so, that we get the chosen qualities.
+		if label == 'Quality':
+			snip = htmlsnippet[b:c].strip()
+			if '<b>' in snip:
+				start = snip.find('<b>') + 3
+				end = snip.find('</b>', start)
+				return snip[start:end]
 		
 		return htmlsnippet[b:c].strip()
 	
