@@ -259,7 +259,7 @@ def get_download_links(showName, showId, episodeName, episodeId, url = None):
 	return result
 
 def _collect_download_links(showName, showId, episodeName, episodeId, url, result):
-	print "'%s' %d '%s' %s %s %d" % (showName, showId, episodeName, str(episodeId), url, len(result))
+	# print "'%s' %d '%s' %s %s %d" % (showName, showId, episodeName, str(episodeId), url, len(result))
 	# Check if we have the page content in the CACHE or download it
 	if url in CACHE:
 		html = CACHE[url]
@@ -273,13 +273,19 @@ def _collect_download_links(showName, showId, episodeName, episodeId, url, resul
 			print "[WARN] Result has no content-type!"
 		elif (resp.headers['content-type'][0:9] != "text/html"):
 			print "[WARN] Content-type is unexpected: %s" % resp.headers['content-type']
-		html = resp.read()
+			
+		if 'content-encoding' in resp.headers and resp.headers['content-encoding'] == 'gzip':
+			# See http://stackoverflow.com/questions/2423866/python-decompressing-gzip-chunk-by-chunk/2424549#2424549
+			import zlib
+			html = zlib.decompress(resp.read(), 16+zlib.MAX_WBITS)			
+		else:
+			html = resp.read()
 		resp.close()
 
 		CACHE[url] = html
 
 	if html[0:14] != '<!DOCTYPE html':
-		print "[WARN] Result page for %s does not look like HTML: %s" % (url, html[0:20])
+		print "[ERROR] Result page for %s does not look like HTML: %s" % (url, html[0:20])
 
 	# print html[0:1000]
 	# Now parse the page content
@@ -295,9 +301,9 @@ def _collect_download_links(showName, showId, episodeName, episodeId, url, resul
 		if downloadEpisodeNr == None:
 			# print "[WARN] Skipping %s without episode-no" % downloadName
 			continue
-
+		
 		episodeIdMatch = (downloadEpisodeNr[0] == seasonNo and downloadEpisodeNr[1] == episodeNr)
-		# print "S%02dE%02d == S%02dE%02d => %s" % (downloadEpisodeNr[0], downloadEpisodeNr[1], seasonNo, episodeNr, str(episodeIdMatch) )
+		#print "S%02dE%02d == S%02dE%02d => %s" % (downloadEpisodeNr[0], downloadEpisodeNr[1], seasonNo, episodeNr, str(episodeIdMatch) )
 		if episodeIdMatch or (downloadName.lower().find(episodeName.lower().replace(' ', '.')) >= 0):
 			result.append(download)
 
