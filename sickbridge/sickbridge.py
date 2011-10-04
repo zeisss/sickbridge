@@ -55,6 +55,7 @@ class SickbridgeConfig:
 	configFile = None
 
 	config = None
+	mappings = {}
 	def __init__(self):
 		if sys.platform == "darwin":
 			# use ~/.sickbridge if on a mac
@@ -71,6 +72,8 @@ class SickbridgeConfig:
 
 		self.config = {}
 		self.read_config()
+		
+		self.mappings['Castle (2009)'] = 'http://serienjunkies.org/serie/castle/'
 
 	def write_config(self):
 		"""Write settings to configuration file"""
@@ -124,12 +127,10 @@ class SickbridgeConfig:
 	def get_mapping(self, serieName):
 		# TODO move to config
 		# Provide URLs for series manually, if the script is unable to find them through the search
-		SERIES_MAPPING = {
-			'Castle (2009)': 'http://serienjunkies.org/castle/'
-		}
+		
 
-		if serieName in SERIES_MAPPING:
-			return SERIES_MAPPING[serieName]
+		if serieName in self.mappings:
+			return self.mappings[serieName]
 		else:
 			return None
 
@@ -177,12 +178,14 @@ def filter_download(downloads, showQuality, showLanguage):
 	newDownloads = []
 
 	for download in downloads:
-		(length1, size1, language1, format, uploader, downloadName, links) = download
+		(length1, size1, language1, format1, uploader, downloadName, links) = download
 		# Guess the format from the download / release name. This should be the
 		# best solution because the quality tags on serienjunkies.org are
 		# inconsistent, but quality tags in release names are more or less
 		# standardized
 		format = get_quality(downloadName)
+		if format == None:
+			format = format1 # Use the provided format as a fallback
 
 		# If the download matches the quality/language requirements => add it
 		if is_quality(showQuality, size1, format) and is_language(showLanguage, language1):

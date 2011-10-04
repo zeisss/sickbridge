@@ -67,12 +67,12 @@ def action_default(config, history):
 		print "| Language: %s " % showLanguage
 		print "| Quality: %s " % showQuality
 		print "|"
-		print "| Episode: S%sE%s - %s" % (episodeNo[0], episodeNo[1], episodeName)
+		print "| Episode: S%02dE%02d - %s" % (episodeNo[0], episodeNo[1], episodeName)
 		print "+-----------------------------------------------------------------------------+"
 
 		# Skip episode, if the history shows we already added it once to jdownloader
 		# Possible reason for still beeing in the backlog:
-		# - JDownloader is still downloader
+		# - JDownloader is still downloading
 		# - Files are offline
 		# - many more ...
 		if history.has_downloaded(seriesName, episodeNo, episodeName):

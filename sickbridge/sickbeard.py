@@ -11,9 +11,8 @@ def parse_season_html(html):
 
 	i = html.find("show=", i)
 	j = html.find("\"", i)
-	showId = html[i+5:j]
-
-
+	showId = int(html[i+5:j])
+	
 	i = html.find(">", i)
 	j = html.find("<",i)
 	name = html[i+1:j]
