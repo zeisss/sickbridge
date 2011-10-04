@@ -20,27 +20,27 @@ class SickbridgeHistory:
 	def __init__(self, config):
 		self.config = config
 		self.path = os.path.join(self.config.home, "history")
-		
+
 		if not os.path.exists(self.path):
 			os.makedirs(self.path)
-	
+
 	def clear(self):
 		shutil.rmtree(self.path)
-	
+
 	def has_downloaded(self, seriesName, episodeNo, episodeName):
 		"""
 		Returns True when there was a previous call to @add_download(). False otherwise.
-		
+
 		Implementation Note: This adds a md5 hashed file to the home of the current user.
 		"""
-			
+
 		filePath = self.get_path(seriesName, episodeNo, episodeName)
-		return os.path.exists(filePath)	
-	
+		return os.path.exists(filePath)
+
 	def add_download(self, seriesName, episodeNo, episodeName):
 		filePath = self.get_path(seriesName, episodeNo, episodeName)
-		open(filePath, 'w').close() 
-		
+		open(filePath, 'w').close()
+
 	def get_path(self, seriesName, episodeNo, episodeName):
 		md5 = hashlib.md5()
 		md5.update(seriesName)
@@ -53,7 +53,7 @@ class SickbridgeConfig:
 	'''
 	home = None
 	configFile = None
-	
+
 	config = None
 	def __init__(self):
 		if sys.platform == "darwin":
@@ -66,52 +66,52 @@ class SickbridgeConfig:
 			# let's assume everything else is linux...
 			# then this should work...
 			self.home = os.path.join(os.path.expanduser("~"), '.sickbridge')
-		
+
 		self.configFile = os.path.join(self.home, "sickbridge.cfg")
-		
+
 		self.config = {}
 		self.read_config()
-		
+
 	def write_config(self):
 		"""Write settings to configuration file"""
 		config = ConfigParser.RawConfigParser()
-		
+
 		config.add_section('Sickbridge')
 		for x in ['firsttime', 'preferredhost', 'language', 'sburl', 'jdurl', 'sbname', 'sbpass']:
 			config.set('Sickbridge', x, self.config[x]);
-			
+
 		if not os.path.exists(self.home):
 			print "Creating %s" % self.home
 			os.makedirs(self.home)
-		
+
 		with open(self.configFile, 'wb') as fp:
 			config.write(fp)
-		
+
 		print "Settings written to configuration file %s" % self.configFile
-		
+
 	def read_config(self):
 		"""Read settings from configuration file"""
-		
+
 		# set ConfigParser up with default values
 		config = ConfigParser.ConfigParser({
-			'preferredhost': 	None,
-			'language': 		None,
-			'sburl': 			"http://localhost:8081/",
-			'jdurl': 			"http://localhost:7151/",
-			'sbname': 			None,
-			'sbpass': 			None,
+			'preferredhost':	None,
+			'language':			None,
+			'sburl':			"http://localhost:8081/",
+			'jdurl':			"http://localhost:7151/",
+			'sbname':			None,
+			'sbpass':			None,
 			'firsttime':		'yes'
 		})
-			
+
 		# read the actual config file
 		config.read(self.configFile)
-		
+
 		# set global variables to read values
 		if config.has_section('Sickbridge'):
 			section = 'Sickbridge'
 		else:
 			section = 'DEFAULT'
-		
+
 		for x in ['firsttime', 'preferredhost', 'language', 'sburl', 'jdurl', 'sbname', 'sbpass']:
 			self.config[x] = config.get(section, x);
 			if self.config[x] == "None":
@@ -127,12 +127,12 @@ class SickbridgeConfig:
 		SERIES_MAPPING = {
 			'Castle (2009)': 'http://serienjunkies.org/castle/'
 		}
-		
+
 		if serieName in SERIES_MAPPING:
 			return SERIES_MAPPING[serieName]
 		else:
 			return None
-		
+
 def link_sorter(config):
 	PREFERRED_HOSTER = config.get('preferredhost')
 	def helper(item):
@@ -144,14 +144,14 @@ def link_sorter(config):
 		else:
 			return name
 	return helper
-	
+
 def download_sorter(config):
 	'''
 	Returns a function which sorts the downloads by (format, size, downloadLink)
 	'''
 	def helper(a):
 		length1, size1, language1, format1, uploader1, downloadName1, links1 = a
-		
+
 		sortedLinks = sorted(links1, key=link_sorter(config))
 		if format1 == None:
 			format1 = ""
@@ -161,9 +161,9 @@ def download_sorter(config):
 
 def schedule_download(config, download):
 	print "Downloading %s" % download[5]
-	
+
 	sortedLinks = sorted(download[6], key=link_sorter(config))
-	
+
 	if sortedLinks[0][0] == config.get('preferredhost'): # if our preferred hoster is there, add it solely
 		print "Adding %s" % sortedLinks[0][1]
 		jdownloader.add_link(config.get('jdurl'), sortedLinks[0][1])
@@ -172,10 +172,10 @@ def schedule_download(config, download):
 			print "Adding %s" % link
 			jdownloader.add_link(config.get('jdurl'), link)
 	print
-	
+
 def filter_download(downloads, showQuality, showLanguage):
 	newDownloads = []
-	
+
 	for download in downloads:
 		(length1, size1, language1, format1, uploader, downloadName, links) = download
 		# Guess the format from the download / release name. This should be the
@@ -190,7 +190,7 @@ def filter_download(downloads, showQuality, showLanguage):
 		if is_quality(showQuality, size1, format) and is_language(showLanguage, language1):
 			newDownloads.append(download)
 	return newDownloads
-	
+
 def get_quality(release):
 	'''
 	Tries to guess the quality of the release by parsing the release name.
@@ -240,7 +240,7 @@ def get_quality(release):
 def is_quality(showQuality, downloadSize, downloadFormat):
 	'''
 	Returns true if the format or size matches a shows quality.
-	
+
 	showQuality = "HD" | "SD" | "Any" | custom combination of formats
 	'''
 	if showQuality == 'HD':
@@ -263,5 +263,5 @@ def is_language(showLanguage, downloadLanguage):
 	'''
 	if showLanguage == None or downloadLanguage == None:
 		return True
-	
+
 	return showLanguage.lower() in downloadLanguage.lower()
