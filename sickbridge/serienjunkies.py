@@ -301,10 +301,15 @@ def _collect_download_links(showName, showId, episodeName, episodeId, url, resul
 		if downloadEpisodeNr == None:
 			# print "[WARN] Skipping %s without episode-no" % downloadName
 			continue
-		
-		episodeIdMatch = (downloadEpisodeNr[0] == seasonNo and downloadEpisodeNr[1] == episodeNr)
-		#print "S%02dE%02d == S%02dE%02d => %s" % (downloadEpisodeNr[0], downloadEpisodeNr[1], seasonNo, episodeNr, str(episodeIdMatch) )
-		if episodeIdMatch or (downloadName.lower().find(episodeName.lower().replace(' ', '.')) >= 0):
+
+		# We do not allow searching for episodeName, when the episodeName is part of the showName 
+		# e.g. for the S01E01 of Dexter this was the case and resulted in wrong downloads
+		if not (episodeName.lower() in showName.lower()):
+			episodeNameMatch = (downloadName.lower().find(episodeName.lower().replace(' ', '.')) >= 0)
+		else:
+			episodeNameMatch = False
+		episodeIdMatch = (downloadEpisodeNr[0] == seasonNo and downloadEpisodeNr[1] == episodeNr)		
+		if episodeIdMatch or episodeNameMatch:
 			result.append(download)
 
 	nextUrl = parse_next_page_link(html)
