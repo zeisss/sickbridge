@@ -4,7 +4,7 @@ from sickbridge import serienjunkies
 from sickbridge import sickbridge
 
 import sys
-
+import time
 
 def parseOptions():
 	'''Using command line arguments to change config file'''
@@ -39,6 +39,7 @@ def action_default(config, history):
 	cBacklogSize = 0
 	cNotDownloadedDueToCache = 0
 	cAddedToDownloader = 0
+	cSkippedDueQualityLanguageMismatch = 0
 
 	if not jdownloader.is_available(config.get('jdurl')):
 		print '[ERROR] Unable to connect to JDownloader. Check the following:'
@@ -81,24 +82,26 @@ def action_default(config, history):
 			continue
 
 		# Check if we have a specific URL to check for this TV-Serie (Sometimes the script cannot guess the page url correctly)
+		# None if no specific URL is available
 		specificUrl = config.get_mapping(seriesName)
 
 		# Grab the page and parse it into a list of available episodes
 		downloads = serienjunkies.get_download_links(seriesName, seriesId, episodeName, episodeNo, url=specificUrl)
 
 		# Filter out downloads that do not match our requirements (format, quality, language)
-		X = sickbridge.filter_download(downloads, showQuality, showLanguage)
+		filtereDownloads = sickbridge.filter_download(downloads, showQuality, showLanguage)
 
-		if len(downloads) != len(X):
-			print "[INFO] %d Downloads dropped because of quality/language mismatch." % (len(downloads) - len(X))
+		if len(downloads) != len(filtereDownloads):
+			print "[INFO] %d Downloads dropped because of quality/language mismatch." % (len(downloads) - len(filtereDownloads))
+			cSkippedDueQualityLanguageMismatch = cSkippedDueQualityLanguageMismatch + 1
 
 		# If none are found => Abort
-		if X == None or len(X) == 0:
+		if filtereDownloads == None or len(filtereDownloads) == 0:
 			print "[INFO] No downloads found."
 		# We found some downloads for our wished episode :D
 		else:
 			# Sort them (If we have a preferred hoster, this sorts it to the top)
-			sortedDownloads = sorted(X, key=sickbridge.download_sorter(config))
+			sortedDownloads = sorted(filtereDownloads, key=sickbridge.download_sorter(config))
 
 			# Another check if we might already be downloading this file
 			if jdownloader.in_queue(config.get('jdurl'), sortedDownloads[0][5]):
@@ -109,6 +112,8 @@ def action_default(config, history):
 				# Mark episode as downloaded by SickBridge
 				history.add_download(seriesName, episodeNo, episodeName)
 				cAddedToDownloader = cAddedToDownloader + 1
+				
+				time.sleep(1) # sleep 1s to give jdownloader and others time act and relax :P
 
 	# Print final results
 	print
@@ -116,6 +121,7 @@ def action_default(config, history):
 	print "==============================================================================="
 	print "= %3d of %3d were previously added to queue.									 =" % (cNotDownloadedDueToCache, cBacklogSize)
 	print "= Successfully added %3d new links to queue.									 =" % (cAddedToDownloader)
+	print "= %2d skipped due to quality/language mismatch.   							 =" % (cSkippedDueQualityLanguageMismatch)	
 	print "==============================================================================="
 
 def action_clear(config, history):
@@ -126,8 +132,9 @@ def action_save(config, history):
 	config.write_config()
 
 def main():
-	print "Sickbridge"
-	print "=========="
+	print "#============#"
+	print "| Sickbridge |"
+	print "#============#"
 	config = sickbridge.SickbridgeConfig()
 	if config.get('firsttime') == 'yes':
 		config.set('firsttime', 'no')

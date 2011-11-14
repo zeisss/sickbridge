@@ -28,11 +28,11 @@ class SickbridgeHistory:
 		shutil.rmtree(self.path)
 
 	def has_downloaded(self, seriesName, episodeNo, episodeName):
-		"""
+		'''
 		Returns True when there was a previous call to @add_download(). False otherwise.
 
 		Implementation Note: This adds a md5 hashed file to the home of the current user.
-		"""
+		'''
 
 		filePath = self.get_path(seriesName, episodeNo, episodeName)
 		return os.path.exists(filePath)
@@ -76,7 +76,7 @@ class SickbridgeConfig:
 		self.mappings['Castle (2009)'] = 'http://serienjunkies.org/serie/castle/'
 
 	def write_config(self):
-		"""Write settings to configuration file"""
+		'''Write settings to configuration file'''
 		config = ConfigParser.RawConfigParser()
 
 		config.add_section('Sickbridge')
@@ -93,12 +93,12 @@ class SickbridgeConfig:
 		print "Settings written to configuration file %s" % self.configFile
 
 	def read_config(self):
-		"""Read settings from configuration file"""
+		'''Read settings from configuration file'''
 
 		# set ConfigParser up with default values
 		config = ConfigParser.ConfigParser({
 			'preferredhost':	None,
-			'language':			None,
+		#	'language':			None,
 			'sburl':			"http://localhost:8081/",
 			'jdurl':			"http://localhost:7151/",
 			'sbname':			None,
@@ -175,6 +175,13 @@ def schedule_download(config, download):
 	print
 
 def filter_download(downloads, showQuality, showLanguage):
+	'''
+	Intended to filter the given list of downloads and return only those, that match the given quality and language.
+	
+	@param downloads list() of download tuples
+	@param showQuality
+	@param showLanguage language code from Sick-Beard ('en', 'de', ...)
+	'''
 	newDownloads = []
 
 	for download in downloads:
