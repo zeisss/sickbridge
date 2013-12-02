@@ -4,11 +4,13 @@ import sys
 import shutil
 import os.path
 import hashlib
+import collections
 import ConfigParser
 
 import sickbeard
 import serienjunkies
 import jdownloader
+
 
 
 class SickbridgeHistory:
@@ -81,8 +83,9 @@ class SickbridgeConfig:
 
 		config.add_section('Sickbridge')
 		for x in ['firsttime', 'preferredhost', 'language', 'sburl', 'jdurl', 'sbname', 'sbpass']:
-			config.set('Sickbridge', x, self.config[x]);
-
+			if x in self.config:
+				config.set('Sickbridge', x, self.config[x]);
+		
 		if not os.path.exists(self.home):
 			print "Creating %s" % self.home
 			os.makedirs(self.home)
@@ -98,13 +101,13 @@ class SickbridgeConfig:
 		# set ConfigParser up with default values
 		config = ConfigParser.ConfigParser({
 			'preferredhost':	None,
-			'language':			None,
+		#	'language':			None,
 			'sburl':			"http://localhost:8081/",
 			'jdurl':			"http://localhost:7151/",
 			'sbname':			None,
 			'sbpass':			None,
 			'firsttime':		'yes'
-		})
+		}, collections.OrderedDict, True)
 
 		# read the actual config file
 		config.read(self.configFile)
@@ -116,8 +119,10 @@ class SickbridgeConfig:
 			section = 'DEFAULT'
 
 		for x in ['firsttime', 'preferredhost', 'language', 'sburl', 'jdurl', 'sbname', 'sbpass']:
+			if not config.has_option(section, x):
+				continue
 			self.config[x] = config.get(section, x);
-			if self.config[x] == "None":
+			if x in self.config and self.config[x] == "None":
 				self.config[x] = None
 
 	def set(self, key, value):
