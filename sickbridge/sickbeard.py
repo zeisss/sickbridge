@@ -6,7 +6,10 @@ SICKBEARD_BACKLOG_PAGE = "/manage/backlogOverview"
 
 cache = dict()
 
-def parse_season_html(html):
+def debug(msg):
+    print '[DEBUG] %s' % msg
+
+def parse_show_html(html):
 	i = html.find("<a")
 
 	i = html.find("show=", i)
@@ -42,7 +45,8 @@ def parse_episode_html(html):
 	return ((season, episode), episodeName)
 
 def parse_backlog_page(html):
-	SEASON_START = "<tr class=\"seasonheader\">";
+	SHOW_START = "<h2 class=\"backlogShow\">"
+	SHOW_END = "</h2>"
 	EP_START = "<tr class=\"wanted\">"
 	EP_END = "</tr>"
 
@@ -51,33 +55,38 @@ def parse_backlog_page(html):
 
 	while 1:
 		# Check for the series name
-		seasonStart = html.find(SEASON_START, offset)
-		if not(seasonStart >= 0):
+		showStart = html.find(SHOW_START, offset)
+		if not(showStart >= 0):
+			debug('No more shows found.')
 			break;
 
 		# Parse the series name
-		seasonEnd = html.find("</tr>", seasonStart)
-		seasonName, showId = parse_season_html(html[seasonStart:seasonEnd])
+		showEnd = html.find(SHOW_END, showStart)
+		showName, showId = parse_show_html(html[showStart:showEnd])
 
-		offset = seasonEnd
+		offset = showEnd
 
-		nextSeasonStart = html.find(SEASON_START, offset)
-		if nextSeasonStart < 0:
-			nextSeasonStart = html.index('</table>', offset)
+		nextShowStart = html.find(SHOW_START, offset)
+		if nextShowStart < 0:
+			nextShowStart = html.index('</table>', offset)
+
+		debug('Found show %s (%d)' % (showName, showId))
 
 		while (1):
 			# parse the episode blocks
 			i = html.find(EP_START, offset)
-			#print i
+			print i
 
-			if not (i >= 0) or nextSeasonStart < i:
+			if not (i >= 0) or nextShowStart < i:
+				debug('No more episodes found.')
 				break
 			j = html.index(EP_END, i)
 			#print j
 			episodeHtml = html[i:j]
 			(episodeNo, episodeName) = parse_episode_html(episodeHtml)
 			#print episodeName
-			result.append((seasonName, showId, episodeName, episodeNo))
+			debug("Found %2dx%2d %s" % (episodeNo[0], episodeNo[1], episodeName))
+			result.append((showName, showId, episodeName, episodeNo))
 			offset = j
 	return result
 
