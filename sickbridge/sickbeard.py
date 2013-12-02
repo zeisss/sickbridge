@@ -7,7 +7,8 @@ SICKBEARD_BACKLOG_PAGE = "/manage/backlogOverview"
 cache = dict()
 
 def debug(msg):
-    print '[DEBUG] %s' % msg
+	# print '[DEBUG] %s' % msg
+	pass
 
 def parse_show_html(html):
 	i = html.find("<a")
@@ -75,7 +76,7 @@ def parse_backlog_page(html):
 		while (1):
 			# parse the episode blocks
 			i = html.find(EP_START, offset)
-			print i
+			# print i
 
 			if not (i >= 0) or nextShowStart < i:
 				debug('No more episodes found.')
@@ -103,7 +104,7 @@ def parse_show_page(html, show_id):
 	def parse_field(htmlsnippet, label):
 		a = htmlsnippet.find(">%s:" % label)
 		if not (a >= 0):
-			#print "ERR-003: No start found for label %s" % label
+			print "ERR-005: No start found for label %s" % label
 			return None
 
 		b = htmlsnippet.find("<td>", a) + 4
@@ -119,30 +120,37 @@ def parse_show_page(html, show_id):
 				end = snip.find('</b>', start)
 				return snip[start:end]
 
+		# The language field has a an image. Cut it out, if there is text afterwards
+		if label == 'Language' and htmlsnippet[b] == '<':
+			b = htmlsnippet.find('>', b+1) + 1
 		return htmlsnippet[b:c].strip()
 
 	SUMMARY_START="id=\"summary\""
 	SUMMARY_END="</div>"
 
-	TITLE_START = "<h1>"
+	TITLE_START = "<h1 class=\"title\">"
 	TITLE_END = "</a>"
 
 	titleStart = html.find(TITLE_START)
-	if not(titleStart >= 0): return None
-	titleStart = html.find(">", titleStart + 4) + 1
+	if not(titleStart >= 0):
+		print "ERR-003: No start-title tag found for show."
+		return None
+	titleStart = html.find(">", titleStart + len(TITLE_START)) + 1
 	titleEnd = html.find(TITLE_END, titleStart)
-	if not(titleEnd >= 0): return None
+	if not(titleEnd >= 0):
+		print "ERR-004: No end-title tag found for show."
+		return None
 
 	showName = html[titleStart:titleEnd]
 
 	summaryStart = html.find(SUMMARY_START)
 	if not (summaryStart >= 0):
-		#print "ERR-001: No summary found"
+		print "ERR-001: No summary found"
 		return None
 
 	summaryEnd = html.find(SUMMARY_END, summaryStart)
 	if not (summaryEnd >= 0):
-		#print "ERR-002: No end summary found"
+		print "ERR-002: No end summary found"
 		return None
 
 	summary = html[summaryStart:summaryEnd]
@@ -154,9 +162,9 @@ def parse_show_page(html, show_id):
 		parse_field(summary, 'Quality'),
 		parse_field(summary, 'Language'),
 		parse_field(summary, 'Status'),
-		parse_field(summary, 'Active').find('yes') >= 0,
+		parse_field(summary, 'Paused').find('no') >= 0, # active, so check for paused=No
 		parse_field(summary, 'Air-by-Date').find('yes') >= 0,
-		parse_field(summary, 'Season Folders').find('yes') >= 0
+		parse_field(summary, 'Flatten Folders').find('no') >= 0 # was: "Season Folders", so check for Flatten=No
 	)
 
 def get_show_settings(server_url, show_id):
@@ -176,11 +184,12 @@ def get_show_settings(server_url, show_id):
 	if sUrl in cache:
 		return cache[sUrl]
 	else:
-		print "Fetching show-page %s" % sUrl
+		print "[INFO] Fetching show-page %s" % sUrl
 		page = urllib.urlopen(sUrl)
 		html = page.read()
 		page.close()
 
 		result = parse_show_page(html, show_id)
-		cache[sUrl] = result
+		if result:
+			cache[sUrl] = result
 		return result

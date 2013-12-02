@@ -76,6 +76,7 @@ class SickbridgeConfig:
 		self.read_config()
 		
 		self.mappings['Castle (2009)'] = 'http://serienjunkies.org/serie/castle/'
+		self.mappings['Ultimate Spiderman'] = 'http://serienjunkies.org/serie/ultimate-spider-man/'
 
 	def write_config(self):
 		'''Write settings to configuration file'''

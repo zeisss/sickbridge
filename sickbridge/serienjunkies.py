@@ -6,6 +6,10 @@ import string
 import urllib
 import httplib
 
+def debug(msg):
+	# print "[DEBUG] %s" % msg
+	pass
+
 def parse_field(html, text):
 	i = html.find(text)
 	if i >= 0:
@@ -45,35 +49,6 @@ def parse_author_line(html):
 	language = parse_field(html, 'Sprache:')
 	format = parse_field(html, 'Format:')
 	uploader = parse_field(html, 'Uploader:')
-	#i = html.find('Dauer:')
-	#if i >= 0:
-	#	i = html.index(' ', i)
-	#	j = html.index(' |', i)
-	#	length = html[i+1:j]
-	#
-	#i = html.find('<strong>Gr')
-	#if i >= 0:
-	#	i = html.index(' ', i)
-	#	j = html.index(' |', i)
-	#	size= html[i+1:j]
-	#
-	#i = html.find('Sprache:')
-	#if i >= 0:
-	#	i = html.index(' ', i)
-	#	j = html.index(' |', i)
-	#	language = html[i+1:j]
-	#
-	#i = html.find('Format:')
-	#if i >= 0:
-	#	i = html.index(' ', i)
-	#	j = html.index(' |', i)
-	#	format = html[i+1:j]
-	#
-	#i = html.find('Uploader:')
-	#if i >= 0:
-	#	i = html.index(' ', i)
-	#	j = html.index('<', i)
-	#	uploader = html[i+1:j]
 
 	return length, size, language, format, uploader
 
@@ -169,8 +144,7 @@ def parse_serienjunkies_html(html):
 		j = html.index(POST_END, i)
 
 		postDownloads = parse_post_html(html[i:j])
-		# print postDownloads
-		# print "---"
+		
 		for (length, size, language, format, uploader, episodeName, urls) in postDownloads:
 			links.append((length, size, language, format, uploader, episodeName, urls))
 		offset = j
@@ -190,19 +164,26 @@ def escape_show_name(name):
 	return result.rstrip('-').strip('-').lower()
 
 def parse_episode_no(name):
-	i = name.find('.S')
+	# debug("Searching for episode no in %s" % name)
+	
+	offset = 0
+	
+	while True:
+		i = name.find('.S', offset)
+		if i < 0:
+			break
 
-	# Search for a ...S__E__...
-	if i >= 0:
-
-		s = name[i+1:i+7]
-
-		if s[0] == 'S' and s[3] == 'E':
-			se = int(s[1:3])
-			ep = int(s[4:6])
-
-			return (se, ep)
-
+		# Search for a ...S__E__...
+		if i + 8 < len(name):
+			s = name[i+1:i+7]
+			if s[0] == 'S' and s[3] == 'E':
+				se = int(s[1:3])
+				ep = int(s[4:6])
+				return (se, ep)
+		
+		offset = i + 1
+	
+	
 	offset = 0
 
 	for part in name.split('.'):
@@ -299,7 +280,7 @@ def _collect_download_links(showName, showId, episodeName, episodeId, url, resul
 
 		downloadEpisodeNr = parse_episode_no(downloadName)
 		if downloadEpisodeNr == None:
-			# print "[WARN] Skipping %s without episode-no" % downloadName
+			print "[WARN] Skipping download %s without episode-no" % downloadName
 			continue
 
 		# We do not allow searching for episodeName, when the episodeName is part of the showName 

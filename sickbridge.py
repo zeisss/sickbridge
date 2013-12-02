@@ -53,7 +53,9 @@ def action_default(config, history):
 
 	episodes = sickbeard.get_backlog_list(SICKBEARD_URL_C)
 	cBacklogSize = len(episodes)
-
+	
+	print '[INFO] Found %d items in your sickbeard backlog' % (cBacklogSize)
+	
 	# Foreach episode in the backlog
 	for (seriesName, seriesId, episodeName, episodeNo) in episodes:
 		print
