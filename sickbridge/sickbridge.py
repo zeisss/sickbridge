@@ -98,7 +98,7 @@ class SickbridgeConfig:
 		# set ConfigParser up with default values
 		config = ConfigParser.ConfigParser({
 			'preferredhost':	None,
-		#	'language':			None,
+			'language':			None,
 			'sburl':			"http://localhost:8081/",
 			'jdurl':			"http://localhost:7151/",
 			'sbname':			None,
